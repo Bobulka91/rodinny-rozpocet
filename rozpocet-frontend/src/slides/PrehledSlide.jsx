@@ -31,7 +31,7 @@ function buildCategoryBreakdown(expenses) {
 
 function PrehledSlide() {
   // Data z Contextu - nemusíme je natahovat znovu, appka je má už centrálně
-  const { expenses, incomes, planComparisonRows, isLoading, error } = useContext(AppContext);
+  const { expenses, incomes, savingGoals, planComparisonRows, isLoading, error } = useContext(AppContext);
 
   if (isLoading) return <p style={{ color: 'white' }}>Načítám...</p>; // zatímco data ještě nedorazila
   if (error) return <p style={{ color: 'white' }}>Chyba: {error}</p>; // pokud request selhal
@@ -39,6 +39,7 @@ function PrehledSlide() {
   const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0); // součet všech příjmů
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0); // součet všech výdajů
   const balance = totalIncome - totalExpense; // kolik zbylo/přebylo
+  const totalSaved = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0); // součet naspořeného napříč všemi cíli
 
   // Souhrnný "Celkem" řádek pro tabulku - sečte plán/skutečnost/rozdíl
   // napříč všemi kategoriemi z planComparisonRows
@@ -63,7 +64,7 @@ function PrehledSlide() {
       <div className="glass-card stats-bar">
         <StatCard label="Příjmy" amount={`${totalIncome} Kč`} variant="income" />
         <StatCard label="Výdaje" amount={`${totalExpense} Kč`} variant="expense" />
-        <StatCard label="Naspořeno" amount="112 000 Kč" variant="" />
+        <StatCard label="Naspořeno" amount={`${totalSaved} Kč`} variant="" />
         <StatCard label="Bilance" amount={`${balance} Kč`} variant="balance" />
       </div>
 

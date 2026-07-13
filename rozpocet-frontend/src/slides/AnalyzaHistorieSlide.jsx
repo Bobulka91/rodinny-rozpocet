@@ -15,7 +15,7 @@ import { createPlan, updatePlan, deletePlan } from '../api/planApi';
  * Seskupí příjmy a výdaje podle měsíce (RRRR-MM z data transakce)
  * a připraví je ve tvaru, co čeká MonthlyBarChart (Recharts).
  */
-function buildMonthlyData(incomes, expenses) {
+export function buildMonthlyData(incomes, expenses) {
   const monthMap = {}; // "slovník" - klíč je měsíc "RRRR-MM", hodnota jsou součty
 
   incomes.forEach((income) => {
