@@ -1,0 +1,558 @@
+/* ====================
+   FONTY A ZÁKLADNÍ RESET
+   ==================== */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+html {
+  overflow-y: scroll;
+}
+
+:root {
+  --indigo: #6C63E0;
+  --violet: #9D7FE8;
+  --pink: #C2569B;
+  --ink: #2E2A47;
+  --ink-soft: #8983A6;
+  --card: #EFE7FB;
+  --card-mint: #E6DBF7;
+  --ok: #3FAE86;
+  --neg: #D65B90;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+}
+
+
+/* ====================
+   APP SHELL - hlavní layout (sidebar + obsah)
+   ==================== */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: rgba(30, 27, 75, 0.4);
+  backdrop-filter: blur(10px);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-title {
+  color: white;
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+}
+.sidebar-icon {
+  font-size: 16px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 24px 32px;
+  max-width: 960px;
+}
+
+@media (max-width: 700px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+  }
+  .sidebar-title {
+    display: none;
+  }
+  .sidebar-item {
+    flex-shrink: 0;
+  }
+  .main-content {
+    padding: 16px;
+  }
+}
+
+
+/* ====================
+   NADPISY A SEKCE
+   ==================== */
+.slide {
+  padding: 0;
+}
+.eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  margin-bottom: 3px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.section-title {
+  color: #ffffff;
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.section-label {
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 18px 0 8px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+
+/* ====================
+   GLASSMORPHISM KARTY
+   ==================== */
+.glass-card {
+  background: rgba(245, 230, 245, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(219, 39, 119, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  margin-bottom: 16px;
+  color: #1e1b4b;
+}
+
+
+/* ====================
+   TOP STATISTIKY (StatCard)
+   ==================== */
+.stats-bar {
+  display: flex;
+}
+.stat-col {
+  flex: 1;
+  text-align: center;
+  padding: 0 4px;
+  border-right: 1px solid rgba(30, 27, 75, 0.1);
+}
+.stat-col:last-child {
+  border-right: none;
+}
+.stat-col .label {
+  font-size: 0.65rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  display: block;
+}
+.stat-col .value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+.stat-col.income .value { color: #10b981; }
+.stat-col.expense .value { color: #C24BA0; }
+.stat-col.balance .value { color: #6C63E0; }
+
+
+/* ====================
+   TABULKA (PlanComparisonTable a obecně)
+   ==================== */
+.budget-table, table.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  color: #1e1b4b;
+}
+.budget-table th {
+  text-align: left;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.65rem;
+  padding: 6px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.budget-table td {
+  padding: 7px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+}
+.budget-table tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.03);
+}
+.budget-table .num { text-align: right; }
+.budget-table tr.total td {
+  font-weight: 700;
+  border-top: 2px solid #1e1b4b;
+  padding-top: 8px;
+}
+.diff-negative {
+  color: #C24BA0;
+  background: rgba(194, 75, 160, 0.12) !important;
+  font-weight: 700;
+}
+.diff-positive {
+  color: #1e1b4b;
+  background: rgba(165, 243, 252, 0.5) !important;
+  font-weight: 700;
+}
+.table-actions {
+  display: flex;
+  gap: 4px;
+}
+
+
+/* ====================
+   DONUT GRAF S LEGENDOU
+   ==================== */
+.donut-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.donut-svg-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+.donut-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px;
+  font-weight: 700;
+  color: #1e1b4b;
+  text-align: center;
+  line-height: 1.2;
+  width: 45px;
+}
+.legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.75rem;
+  flex: 1;
+}
+.legend-list .li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1e1b4b;
+}
+.legend-list .sw {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-list .pct {
+  color: #6b7280;
+  margin-left: auto;
+}
+
+
+/* ====================
+   PROGRESS BAR A RING CHART
+   ==================== */
+.goal-name {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.goal-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bar-bg {
+  height: 9px;
+  background: rgba(30, 27, 75, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--indigo), var(--pink));
+}
+
+.ring-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.ring-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+.ring-label b {
+  display: block;
+  font-family: 'Fraunces', serif;
+  font-size: 1.2rem;
+  color: #1e1b4b;
+  font-weight: 600;
+}
+
+
+/* ====================
+   TRANSAKCE (TransactionItem)
+   ==================== */
+.txn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px;
+  border-bottom: 1px solid rgba(30, 27, 75, 0.06);
+}
+.txn:last-child { border-bottom: none; }
+.txn-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.txn-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.icon-chip {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(139, 95, 206, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.txn-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e1b4b;
+}
+.txn-date {
+  font-size: 0.65rem;
+  color: #6b7280;
+}
+.txn-amt {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.btn-delete, .btn-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.5;
+  padding: 4px;
+}
+.btn-delete:hover, .btn-edit:hover { opacity: 1; }
+
+
+/* ====================
+   VÝBĚR MĚSÍCE/ROKU (PlanSelector)
+   ==================== */
+.plan-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.plan-selector select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(219, 39, 119, 0.3);
+  background: rgba(245, 230, 245, 0.85);
+  backdrop-filter: blur(10px);
+  color: #1e1b4b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plan-selector select option {
+  color: #1e1b4b;
+  background: #F5E6F5; /* jemně růžovo-fialová, místo čistě bílé */
+}
+
+
+/* ====================
+   MODAL
+   ==================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-box {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  width: 90%;
+  max-width: 380px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-header h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+
+/* ====================
+   FORMULÁŘE
+   ==================== */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.form-tabs button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(46, 42, 71, 0.15);
+  background: white;
+  color: var(--ink-soft);
+  font-weight: 600;
+  cursor: pointer;
+}
+.form-tabs button.active {
+  background: var(--indigo);
+  color: white;
+  border-color: var(--indigo);
+}
+form label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+form input,
+form select {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(46, 42, 71, 0.15);
+  font-size: 14px;
+  background: white;
+}
+.btn-submit {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--indigo);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+/* ====================
+   OBECNÁ TLAČÍTKA
+   ==================== */
+.btn-add {
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: none;
+  background: var(--indigo);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+.confirm-text {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+.btn-cancel {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 42, 71, 0.15);
+  background: white;
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-danger {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--neg);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -1,0 +1,20 @@
+# Frontend
+rozpocet-frontend/node_modules/
+rozpocet-frontend/dist/
+rozpocet-frontend/.env
+
+# Backend
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logy
+*.log
