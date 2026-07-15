@@ -1,0 +1,50 @@
+# Tento soubor definuje celou appku (databáze + backend + frontend)
+# jako sadu propojených kontejnerů, spustitelnou jedním příkazem:
+# docker compose up
+#
+# Poznámka: Tahle MySQL databáze je čerstvá, lokální - nemá nic společného
+# s produkční databází appky na Aiven. Kdokoliv appku takhle spustí,
+# dostane vlastní prázdnou databázi, ne přístup ke skutečným datům.
+
+version: '3.8'
+
+services:
+
+  # --- DATABÁZE ---
+  mysql:
+    image: mysql:8.0  # oficiální MySQL image z Docker Hub
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # heslo pro root uživatele
+      MYSQL_DATABASE: rodinny_rozpocet   # databáze se automaticky vytvoří při prvním startu
+    ports:
+      - "3307:3306"  # zpřístupní databázi i mimo Docker (např. pro HeidiSQL), formát je "port_na_pocitaci:port_v_kontejneru"
+    volumes:
+      - mysql_data:/var/lib/mysql  # data přežijí i restart/smazání kontejneru (viz volumes níže)
+
+  # --- BACKEND (Spring Boot) ---
+  backend:
+    build: ./rozpocet-backend  # postaví image podle Dockerfile ve složce rozpocet-backend
+    ports:
+      - "8001:8080"  # změněno na 8081 kvůli kolizi lokálních portů
+    environment:
+      # Přepíše application.properties za běhu - backend se připojí
+      # na "mysql" (název služby výše, Docker ho automaticky přeloží na správnou IP),
+      # ne na Aiven ani localhost
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rodinny_rozpocet
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+    depends_on:
+      - mysql  # zajistí, že se mysql spustí dřív než backend (appka by jinak nenašla databázi hned při startu)
+
+  # --- FRONTEND (React, sestavený a servírovaný přes nginx) ---
+  frontend:
+    build: ./rozpocet-frontend  # postaví image podle Dockerfile ve složce rozpocet-frontend
+    ports:
+      - "5173:80"  # appka dostupná na localhost:5173 (stejný port jako při vývoji), i když nginx uvnitř běží na portu 80
+    depends_on:
+      - backend  # frontend nemá smysl spouštět, dokud backend neběží
+
+# Pojmenovaný "volume" - Docker si tam ukládá data MySQL mimo samotný kontejner,
+# takže i když kontejner smažeš/přestavíš, data zůstanou zachovaná
+volumes:
+  mysql_data:
