@@ -104,8 +104,8 @@ Frontend má datový tok rozdělený do vrstev: `api/` (volání endpointů) →
 Vyžaduje [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
 ```bash
-git clone https://github.com/Bobulka91/rodinny-rozpocet.git
-cd rodinny-rozpocet
+git clone [https://github.com/Bobulka91/rodinny-rozpocet.git](https://github.com/Bobulka91/rodinny-rozpocet.git)
+   cd rodinny-rozpocet
 docker compose up
 ```
 
