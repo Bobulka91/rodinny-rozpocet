@@ -2,7 +2,7 @@
 // Řeší na jednom místě: base URL, hlavičky requestu, a zpracování chyb.
 // Všechny api/*.js soubory tuhle funkci používají místo přímého volání fetch().
 
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = 'https://rodinny-rozpocet-backend.onrender.com/api';
 
 async function request(endpoint, options = {}) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
