@@ -4,7 +4,9 @@ Fullstack aplikace pro správu rodinného rozpočtu — sledování příjmů, v
 
 Appku reálně používá naše rodina ke správě domácích financí. Není to jen cvičný projekt do šuplíku — od začátku jsem ji stavěl s cílem, aby ji manželka a já reálně používali, což ovlivňovalo i to, jaké funkce appka má a jak jsou udělané.
 
-🔗 **Živá ukázka:** *(odkaz doplním po nasazení na Render)*
+🔗 **Živá ukázka:** [rodinny-rozpocet-frontend.onrender.com](https://rodinny-rozpocet-frontend.onrender.com)
+
+⚠️ *Appka běží na bezplatném tieru Renderu — po delší nečinnosti se "uspí" a první načtení může trvat cca 30–50 sekund, než se probudí. Prosím o trpělivost při prvním otevření.*
 
 ---
 
