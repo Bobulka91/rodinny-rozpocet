@@ -28,7 +28,7 @@ Cíle spoření a dluhy s vizuálním znázorněním pokroku, souhrnný přehled
 ### Analýza / Historie
 Sloupcový graf příjmů vs. výdajů po měsících a porovnání plánu se skutečností.
 
-![Analýza](docs/screenshots/analyza.png)
+![Analýza](docs/screenshots/analyza-historie.png)
 
 ### Přidání transakce
 ![Formulář](docs/screenshots/formular.png)
