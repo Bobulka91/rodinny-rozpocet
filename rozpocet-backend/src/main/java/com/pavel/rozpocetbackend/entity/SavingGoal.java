@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.GenerationType;
 
 /**
  * Entita reprezentující jeden výdaj uložený v databázi.
@@ -22,7 +23,7 @@ import lombok.Setter;
 public class SavingGoal {
 
     @Id             // Označuje primární klíč (jednoznačné ID záznamu)
-    @GeneratedValue // ID se generuje automaticky (1, 2, 3...)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // použije nativní MySQL AUTO_INCREMENT, žádná _seq tabulka
 
     private Long id;  // Primární klíč (jednoznačné ID záznamu)
     private String category;  // Kategorie spoření (např. "Dovolená", "Nouzový fond")

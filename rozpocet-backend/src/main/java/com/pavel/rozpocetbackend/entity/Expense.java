@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDate;
+import jakarta.persistence.GenerationType;
 
 /**
  * Entita reprezentující jeden výdaj uložený v databázi.
@@ -22,7 +23,7 @@ import java.time.LocalDate;
 public class Expense {
 
     @Id              // Označuje primární klíč (jednoznačné ID záznamu)
-    @GeneratedValue  // ID se generuje automaticky (1, 2, 3...)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // použije nativní MySQL AUTO_INCREMENT, žádná _seq tabulka
 
     private Long id;  // Jednoznačné ID výdaje
     private Double amount;  // Částka výdaje
