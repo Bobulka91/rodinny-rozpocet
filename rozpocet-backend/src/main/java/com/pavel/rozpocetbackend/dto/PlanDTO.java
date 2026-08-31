@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class PlanDTO {
 
     private Long id;  // unikátní identifikátor plánu
-    private String category;  // kategorie plánu (např. příjem, výdaj, dluh, spoření)
+    private String planGroup;      // Skupina, na kterou se plán vztahuje
     private Double plannedAmount;  // plánovaná částka pro danou kategorii
     private Integer year;  // rok, pro který je plán vytvořen
     private Integer month;  // měsíc, pro který je plán vytvořen

@@ -3,22 +3,20 @@ package com.pavel.rozpocetbackend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
 /**
- * Třída ExpenseDTO představuje datový přenosník pro výdaje.
+ * DTO pro Expense - verze určená k odeslání přes API.
+ * Obsahuje vnořené ExpenseCategoryDTO místo pouhého ID, aby frontend
+ * hned viděl skupinu a label kategorie bez dalšího dotazu.
  */
-
-@Data  // Lombok: generuje gettery, settery, toString a equals/hashCode najednou
-@AllArgsConstructor  // Lombok: generuje konstruktor se všemi parametry
-@NoArgsConstructor  // Lombok: generuje bezparametrický konstruktor
-
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ExpenseDTO {
-
-    private Long id;  // unikátní identifikátor výdaje
-    private Double amount;  // částka výdaje
-    private LocalDate date;  // datum výdaje
-    private String category;  // kategorie výdaje
-
+    private Long id;
+    private Double amount;
+    private LocalDate date;
+    private ExpenseCategoryDTO expenseCategory;  // Vnořené DTO - celý objekt kategorie, ne jen ID
 }
-

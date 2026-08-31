@@ -1,36 +1,59 @@
 package com.pavel.rozpocetbackend.mapper;
 
+import com.pavel.rozpocetbackend.dto.ExpenseCategoryDTO;
 import com.pavel.rozpocetbackend.dto.ExpenseDTO;
 import com.pavel.rozpocetbackend.entity.Expense;
+import com.pavel.rozpocetbackend.entity.ExpenseCategory;
 
+/**
+ * Překládač mezi Entity Expense a DTO ExpenseDTO.
+ * Zvlášť řeší i převod vnořené ExpenseCategory <-> ExpenseCategoryDTO.
+ */
 public class ExpenseMapper {
 
     /**
      * Převádí Entity Expense na DTO pro odeslání přes API.
+     * Pokud má Expense přiřazenou kategorii, převede i tu (jinak necháme null).
      */
-
-    public static ExpenseDTO toDTO(Expense expense) {  // Převod z entity na DTO
-        if (expense == null) {  // Kontrola, zda je vstupní objekt null
-            return null;  // Pokud je null, vracíme null
+    public static ExpenseDTO toDTO(Expense expense) {
+        if (expense == null) {  // Ochrana proti null hodnotě
+            return null;
         }
-        return new ExpenseDTO(  // Vytvoření nového DTO objektu
-                expense.getId(),  // ID výdaje
-                expense.getAmount(),  // Částka výdaje
-                expense.getDate(),  // Datum výdaje
-                expense.getCategory()  // Kategorie výdaje
+
+        ExpenseCategoryDTO categoryDTO = null;
+        if (expense.getExpenseCategory() != null) {  // Ověříme, že výdaj vůbec má přiřazenou kategorii
+            ExpenseCategory category = expense.getExpenseCategory();
+            categoryDTO = new ExpenseCategoryDTO(
+                    category.getId(),
+                    category.getCategoryGroup(),
+                    category.getLabel(),
+                    category.getType(),
+                    category.getAmount()
+            );
+        }
+
+        return new ExpenseDTO(
+                expense.getId(),
+                expense.getAmount(),
+                expense.getDate(),
+                categoryDTO
         );
     }
 
-    public static Expense toEntity(ExpenseDTO dto) {  // Převod z DTO na entity
-        if (dto == null) {  // Kontrola, zda je vstupní DTO
-            return null;  // Pokud je null, vracíme null
+    /**
+     * Převádí DTO přijaté z API zpět na Entity, aby se dalo uložit do databáze.
+     * Poznámka: expenseCategory se sem musí dosadit zvlášť v Service vrstvě podle ID,
+     * protože appka nechce vytvářet novou ExpenseCategory při každém uložení výdaje.
+     */
+    public static Expense toEntity(ExpenseDTO dto) {
+        if (dto == null) {  // Ochrana proti null hodnotě
+            return null;
         }
-        Expense expense = new Expense();  // Vytvoření nové entity Expense
-        expense.setId(dto.getId());  // Nastavení ID z DTO
-        expense.setAmount(dto.getAmount());  // Nastavení částky z DTO
-        expense.setDate(dto.getDate());  // Nastavení data z DTO
-        expense.setCategory(dto.getCategory());  // Nastavení kategorie z DTO
-        return expense;  // Vrácení vytvořené entity
-
+        Expense expense = new Expense();
+        expense.setId(dto.getId());
+        expense.setAmount(dto.getAmount());
+        expense.setDate(dto.getDate());
+        // expenseCategory se nastavuje zvlášť v Service - viz další krok
+        return expense;
     }
 }

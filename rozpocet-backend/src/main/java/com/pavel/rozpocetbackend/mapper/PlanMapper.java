@@ -19,7 +19,7 @@ public class PlanMapper {
         }
         return new PlanDTO(
                 plan.getId(),
-                plan.getCategory(),
+                plan.getPlanGroup(),
                 plan.getPlannedAmount(),
                 plan.getYear(),
                 plan.getMonth()
@@ -36,7 +36,7 @@ public class PlanMapper {
         }
         Plan plan = new Plan();
         plan.setId(dto.getId());
-        plan.setCategory(dto.getCategory());
+        plan.setPlanGroup(dto.getPlanGroup());
         plan.setPlannedAmount(dto.getPlannedAmount());
         plan.setYear(dto.getYear());
         plan.setMonth(dto.getMonth());

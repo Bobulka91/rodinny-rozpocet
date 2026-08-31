@@ -5,17 +5,16 @@ import com.pavel.rozpocetbackend.entity.Income;
 import com.pavel.rozpocetbackend.mapper.IncomeMapper;
 import com.pavel.rozpocetbackend.service.IncomeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
 /**
  * Třída IncomeController je zodpovědná za zpracování HTTP požadavků týkajících se příjmů.
  * Obsahuje metody pro získání všech příjmů, přidání nového příjmu, výpočet celkového
- * příjmu za rok a měsíční rozpad příjmů pro grafy.
+ * příjmu za rok, měsíční rozpad příjmů pro grafy a agregaci podle osoby.
  */
-
 @RestController  // Označení třídy jako REST Controller
 @RequestMapping("/api/incomes")  // Základní URL pro všechny endpointy v tomto controlleru
 public class IncomeController {
@@ -31,10 +30,14 @@ public class IncomeController {
                 .toList();
     }
 
-    @PostMapping  // Endpoint pro vytvoření nového příjmu
-    public IncomeDTO addIncome(@RequestBody IncomeDTO incomeDTO) {
+    /**
+     * Endpoint pro vytvoření nového příjmu.
+     * sourceId appka očekává jako URL parametr: POST /api/incomes?sourceId=1
+     */
+    @PostMapping
+    public IncomeDTO addIncome(@RequestBody IncomeDTO incomeDTO, @RequestParam Long sourceId) {
         Income incomeEntity = IncomeMapper.toEntity(incomeDTO);  // Převod DTO na entitu
-        Income savedIncome = incomeService.addIncome(incomeEntity);  // Uložení do databáze
+        Income savedIncome = incomeService.addIncome(incomeEntity, sourceId);  // Uložení do databáze s přiřazeným zdrojem
         return IncomeMapper.toDTO(savedIncome);  // Vrácení uloženého příjmu jako DTO
     }
 
@@ -55,21 +58,10 @@ public class IncomeController {
     }
 
     /**
-     * Aktualizuje existující příjem podle ID.
+     * Vrátí sumu příjmů seskupenou podle osoby (Já, Manželka...) - data pro Slide 2.
      */
-    @PutMapping("/{id}")  // PUT /api/incomes/{id}
-    public IncomeDTO updateIncome(@PathVariable Long id, @RequestBody IncomeDTO incomeDTO) {
-        Income incomeEntity = IncomeMapper.toEntity(incomeDTO);
-        Income updated = incomeService.update(id, incomeEntity);
-        return IncomeMapper.toDTO(updated);
-    }
-
-    /**
-     * Smaže příjem podle ID.
-     */
-    @DeleteMapping("/{id}")  // DELETE /api/incomes/{id}
-    public ResponseEntity<Void> deleteIncome(@PathVariable Long id) {
-        incomeService.delete(id);
-        return ResponseEntity.noContent().build();  // HTTP 204 - úspěšně smazáno, žádná data k vrácení
+    @GetMapping("/by-person")  // GET /api/incomes/by-person
+    public Map<String, Double> getIncomeByPerson() {
+        return incomeService.getIncomeByPerson();
     }
 }

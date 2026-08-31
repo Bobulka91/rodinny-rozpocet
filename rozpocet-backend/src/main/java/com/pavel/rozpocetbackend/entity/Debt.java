@@ -1,13 +1,13 @@
 package com.pavel.rozpocetbackend.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import jakarta.persistence.GenerationType;
 
 /**
  * Entita reprezentující jeden výdaj uložený v databázi.
@@ -22,7 +22,7 @@ import jakarta.persistence.GenerationType;
 
 public class Debt {
 
-    @Id              // Označuje primární klíč (jednoznačné ID záznamu)
+    @Id           // Označuje primární klíč (jednoznačné ID záznamu)
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // použije nativní MySQL AUTO_INCREMENT, žádná _seq tabulka
 
     private Long id;  // Jednoznačné ID záznamu

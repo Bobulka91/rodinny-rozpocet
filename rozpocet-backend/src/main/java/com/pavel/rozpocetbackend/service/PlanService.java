@@ -49,7 +49,7 @@ public class PlanService {
                 .orElseThrow(() -> new IllegalArgumentException("Plan not found with id: " + planId));
 
         Double actual = expenseService.getActualAmountForCategoryAndMonth(
-                plan.getCategory(), plan.getYear(), plan.getMonth());
+                plan.getPlanGroup(), plan.getYear(), plan.getMonth());
 
         Map<String, Double> result = new HashMap<>();
         result.put("planned", plan.getPlannedAmount());
@@ -65,7 +65,7 @@ public class PlanService {
     public Plan update(Long id, Plan plan) {
         Plan existing = planRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Plán s ID " + id + " nenalezen"));
-        existing.setCategory(plan.getCategory());
+        existing.setPlanGroup(plan.getPlanGroup());
         existing.setPlannedAmount(plan.getPlannedAmount());
         existing.setYear(plan.getYear());
         existing.setMonth(plan.getMonth());

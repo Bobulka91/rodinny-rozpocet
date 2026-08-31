@@ -20,6 +20,6 @@ public class IncomeDTO {
     private Double amount;  // částka příjmu
     private LocalDate date;  // datum příjmu
     private TypePrijmu type;  // typ příjmu
-    private String source;  // zdroj příjmu
+    private IncomeSourceDTO incomeSource;  // Vnořené DTO - celý objekt zdroje, ne jen ID
 
 }
