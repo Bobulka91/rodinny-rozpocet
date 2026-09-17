@@ -1,81 +1,132 @@
 /**
- * Slide 1 - Přehled: souhrnné statistiky, tabulka Plán vs. skutečnost
- * a donut graf výdajů podle kategorií.
+ * Slide 1 - Přehled: čistě read-only snapshot celkového stavu.
+ * Statistiky, rozpis příjmu (podle osoby) vs výdajů (podle skupiny),
+ * "Zbývá" po odečtení fixních nákladů a předplatného, a 4 donut grafy.
+ * Agregace (expensesByGroup, incomeByPerson) počítá backend, appka je jen zobrazuje.
  */
-import { useContext } from 'react'; // hook pro čtení dat z Contextu
-import { AppContext } from '../context/AppContext'; // sdílený stav appky
-import StatCard from '../components/StatCard'; // malá statistika (Příjem/Výdaje/Bilance)
-import PlanComparisonTable from '../components/PlanComparisonTable'; // tabulka Plán vs. skutečnost
-import CategoryDonut from '../components/CategoryDonut'; // donut graf výdajů podle kategorie
-import { colorForCategory } from '../utils/colors'; // funkce přiřazující barvu podle názvu kategorie
+import { useContext } from 'react';
+import { AppContext } from '../context/AppContext';
+import StatCard from '../components/StatCard';
+import CategoryDonut from '../components/CategoryDonut';
+
+// Přesné názvy skupin, jak je appka očekává v expensesByGroup
+const SKUPINA_FIXNI = 'Fixní náklady';
+const SKUPINA_PREDPLATNE = 'Předplatné';
 
 /**
- * Sečte výdaje podle kategorie a spočítá procentuální podíl každé z nich
- * na celkových výdajích - připraví data přesně ve tvaru, co čeká CategoryDonut.
+ * Převede objekt { klíč: hodnota } (jak appka dostává z backendu) na pole
+ * { category, amount, percentage } - tvar, co čeká CategoryDonut komponenta.
  */
-function buildCategoryBreakdown(expenses) {
-  const map = {}; // "slovník" - klíč je název kategorie, hodnota je součet Kč
-  expenses.forEach((e) => {
-    map[e.category] = (map[e.category] || 0) + e.amount; // pokud kategorie ještě není ve slovníku, začni od 0
-  });
-  const total = Object.values(map).reduce((sum, v) => sum + v, 0); // celkový součet přes všechny kategorie
-
-  return Object.entries(map) // [ [kategorie, částka], ... ] pole dvojic
+function objectToBreakdown(obj) {
+  const total = Object.values(obj).reduce((sum, v) => sum + v, 0);
+  return Object.entries(obj)
     .map(([category, amount]) => ({
       category,
-      percentage: total > 0 ? Math.round((amount / total) * 100) : 0, // ošetření dělení nulou
-      color: colorForCategory(category),
+      amount,
+      percentage: total > 0 ? Math.round((amount / total) * 100) : 0,
     }))
-    .sort((a, b) => b.percentage - a.percentage); // seřazení od největšího podílu
+    .sort((a, b) => b.amount - a.amount);
 }
 
 function PrehledSlide() {
-  // Data z Contextu - nemusíme je natahovat znovu, appka je má už centrálně
-  const { expenses, incomes, savingGoals, planComparisonRows, isLoading, error } = useContext(AppContext);
+  const { savingGoals, debts, expensesByGroup, incomeByPerson, isLoading, error } = useContext(AppContext);
 
-  if (isLoading) return <p style={{ color: 'white' }}>Načítám...</p>; // zatímco data ještě nedorazila
-  if (error) return <p style={{ color: 'white' }}>Chyba: {error}</p>; // pokud request selhal
+  if (isLoading) return <p style={{ color: 'white' }}>Načítám...</p>;
+  if (error) return <p style={{ color: 'white' }}>Chyba: {error}</p>;
 
-  const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0); // součet všech příjmů
-  const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0); // součet všech výdajů
-  const balance = totalIncome - totalExpense; // kolik zbylo/přebylo
-  const totalSaved = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0); // součet naspořeného napříč všemi cíli
+  // Součty počítáme z agregovaných dat, ne z jednotlivých záznamů
+  const totalIncome = Object.values(incomeByPerson).reduce((sum, v) => sum + v, 0);
+  const totalExpense = Object.values(expensesByGroup).reduce((sum, v) => sum + v, 0);
+  const totalSaved = savingGoals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const totalDebtRemaining = debts.reduce((sum, d) => sum + (d.totalAmount - d.paidAmount), 0);
+  const balance = totalIncome - totalExpense;
 
-  // Souhrnný "Celkem" řádek pro tabulku - sečte plán/skutečnost/rozdíl
-  // napříč všemi kategoriemi z planComparisonRows
-  const totalRow = {
-    category: 'Celkem',
-    planned: planComparisonRows.reduce((s, r) => s + r.planned, 0), // součet plánovaných částek
-    actual: planComparisonRows.reduce((s, r) => s + r.actual, 0), // součet skutečných částek
-    difference: planComparisonRows.reduce((s, r) => s + r.difference, 0), // součet rozdílů
-    isTotal: true, // příznak pro PlanComparisonTable, ať tenhle řádek zvýrazní a schová tlačítka
-  };
-  // Total řádek přidáme jen, pokud vůbec nějaké plány existují (jinak by bylo "Celkem: 0" zbytečně)
-  const rowsWithTotal = planComparisonRows.length > 0 ? [...planComparisonRows, totalRow] : [];
+  // "Zbývá" bere jen Fixní náklady + Předplatné ze skupinové agregace
+  const fixniTotal = expensesByGroup[SKUPINA_FIXNI] || 0;
+  const predplatneTotal = expensesByGroup[SKUPINA_PREDPLATNE] || 0;
+  const zbyva = totalIncome - fixniTotal - predplatneTotal;
 
-  const categoryBreakdown = buildCategoryBreakdown(expenses); // data pro donut graf
+  const incomeBreakdown = objectToBreakdown(incomeByPerson);
+  const expenseBreakdown = objectToBreakdown(expensesByGroup);
+
+  // Naspořeno a Dluh zatím počítáme z jednotlivých záznamů (backend pro tohle
+  // agregaci nemá - je jich obvykle jen pár, takže výkonově to nevadí)
+  const savingsTotal = savingGoals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const savingsBreakdown = savingGoals
+    .map((goal) => ({
+      category: goal.category,
+      amount: goal.currentAmount,
+      percentage: savingsTotal > 0 ? Math.round((goal.currentAmount / savingsTotal) * 100) : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const debtBreakdown = debts
+    .map((debt) => ({ category: debt.category, amount: debt.totalAmount - debt.paidAmount }))
+    .map((d) => ({
+      ...d,
+      percentage: totalDebtRemaining > 0 ? Math.round((d.amount / totalDebtRemaining) * 100) : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount);
 
   return (
     <div className="slide">
       <div className="eyebrow">Sekce</div>
       <h2 className="section-title">Přehled</h2>
 
-      {/* Souhrnné statistiky v jedné kartě, 4 sloupce vedle sebe */}
       <div className="glass-card stats-bar">
-        <StatCard label="Příjmy" amount={`${totalIncome} Kč`} variant="income" />
-        <StatCard label="Výdaje" amount={`${totalExpense} Kč`} variant="expense" />
+        <StatCard label="Příjem" amount={`${totalIncome} Kč`} variant="income" />
+        <StatCard label="Výdaj" amount={`${totalExpense} Kč`} variant="expense" />
         <StatCard label="Naspořeno" amount={`${totalSaved} Kč`} variant="" />
         <StatCard label="Bilance" amount={`${balance} Kč`} variant="balance" />
       </div>
 
-      <div className="section-label">Plán vs. skutečnost</div>
-      <div className="glass-card">
-        <PlanComparisonTable rows={rowsWithTotal} />
+      <div className="section-label">Rozpis</div>
+      <div className="glass-card" style={{ display: 'flex', gap: '20px' }}>
+        <div style={{ flex: 1 }}>
+          <strong style={{ fontSize: '0.75rem', color: '#6b7280' }}>PŘÍJEM PODLE OSOBY</strong>
+          {incomeBreakdown.map((item) => (
+            <div key={item.category} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '4px 0' }}>
+              <span>{item.category}</span>
+              <span>{item.amount} Kč</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ flex: 1 }}>
+          <strong style={{ fontSize: '0.75rem', color: '#6b7280' }}>VÝDAJE PODLE SKUPINY</strong>
+          {expenseBreakdown.map((item) => (
+            <div key={item.category} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '4px 0' }}>
+              <span>{item.category}</span>
+              <span>{item.amount} Kč</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="section-label">Výdaje podle kategorií</div>
-      <div className="glass-card">
-        <CategoryDonut segments={categoryBreakdown} centerLabel="Moje Bilance" />
+      <div className="glass-card" style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Zbývá</div>
+        <div style={{ fontSize: '1.8rem', fontWeight: 700, color: zbyva >= 0 ? '#10b981' : '#C24BA0' }}>
+          {zbyva} Kč
+        </div>
+      </div>
+
+      <div className="section-label">Rozklad podle skupin</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="glass-card" style={{ flex: '1 1 45%' }}>
+          <strong style={{ fontSize: '0.75rem' }}>Příjem</strong>
+          <CategoryDonut segments={incomeBreakdown} />
+        </div>
+        <div className="glass-card" style={{ flex: '1 1 45%' }}>
+          <strong style={{ fontSize: '0.75rem' }}>Výdaje</strong>
+          <CategoryDonut segments={expenseBreakdown} />
+        </div>
+        <div className="glass-card" style={{ flex: '1 1 45%' }}>
+          <strong style={{ fontSize: '0.75rem' }}>Naspořeno</strong>
+          <CategoryDonut segments={savingsBreakdown} />
+        </div>
+        <div className="glass-card" style={{ flex: '1 1 45%' }}>
+          <strong style={{ fontSize: '0.75rem' }}>Dluh</strong>
+          <CategoryDonut segments={debtBreakdown} />
+        </div>
       </div>
     </div>
   );

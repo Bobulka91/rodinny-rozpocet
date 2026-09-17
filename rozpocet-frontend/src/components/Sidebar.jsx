@@ -1,13 +1,14 @@
 /**
- * Levé navigační menu appky (na mobilu se přes CSS media query
- * mění na vodorovný pruh nahoře - viz .sidebar v index.css).
+ * Levé navigační menu appky. Po restrukturalizaci má 6 sekcí -
+ * Přehled je čistě read-only, zbytek je rozdělený podle skupin.
  */
 function Sidebar({ active, onChange }) {
   const items = [
     { key: 'prehled', label: 'Přehled', icon: '📊' },
-    { key: 'prijemVydaj', label: 'Příjem / Výdaj', icon: '💸' },
-    { key: 'sporeniDluh', label: 'Spoření / Dluh', icon: '🎯' },
-    { key: 'analyza', label: 'Analýza / Historie', icon: '📈' },
+    { key: 'prijem', label: 'Příjem', icon: '💼' },
+    { key: 'fixni', label: 'Fixní náklady', icon: '🏠' },
+    { key: 'denni', label: 'Každodenní výdaje', icon: '🛒' },
+    { key: 'usporyDluh', label: 'Úspory / Dluh', icon: '🎯' },
   ];
 
   return (

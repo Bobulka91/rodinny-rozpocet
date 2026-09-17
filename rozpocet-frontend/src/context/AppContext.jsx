@@ -1,22 +1,27 @@
 /**
  * Globální stav appky (React Context).
- * Sjednocuje data ze všech 5 hooků na jedno místo a zpřístupňuje je
+ * Sjednocuje data ze všech hooků na jedno místo a zpřístupňuje je
  * kterémukoliv slidu bez nutnosti předávat props přes víc úrovní.
  */
 
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import useExpense from '../hooks/useExpense';
 import useIncome from '../hooks/useIncome';
 import useSavingGoals from '../hooks/useSavingGoals';
 import useDebts from '../hooks/useDebts';
 import usePlans from '../hooks/usePlans';
 import usePlanComparison from '../hooks/usePlanComparison';
+import useExpenseCategories from '../hooks/useExpenseCategories';
+import useIncomeSources from '../hooks/useIncomeSources';
+import useExpensesByGroup from '../hooks/useExpensesByGroup';
+import useIncomeByPerson from '../hooks/useIncomeByPerson';
+import { generateFixedExpenses } from '../api/expenseApi';
 
 export const AppContext = createContext();
 
 /**
  * Provider komponenta - obaluje celou appku a poskytuje jí sdílený stav.
- * Volá všech 5 datových hooků a spojuje je do jednoho value objektu.
+ * Volá všechny datové hooky a spojuje je do jednoho value objektu.
  */
 export function AppProvider({ children }) {
   const [selectedMonth, setSelectedMonth] = useState(7); // aktuálně vybraný měsíc (PlanSelector)
@@ -30,6 +35,15 @@ export function AppProvider({ children }) {
   const { debts, isLoading: debtsLoading, error: debtsError, refetch: refetchDebts } = useDebts();
   const { plans, isLoading: plansLoading, error: plansError, refetch: refetchPlans } = usePlans();
 
+  // Trvalé šablony kategorií výdajů a zdrojů příjmů (pro dropdown ve formulářích)
+  const { expenseCategories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useExpenseCategories();
+  const { incomeSources, isLoading: sourcesLoading, error: sourcesError, refetch: refetchSources } = useIncomeSources();
+
+  // Agregace počítané přímo na backendu - appka je NEPOČÍTÁ ručně z expenses/incomes,
+  // jen je zobrazí (viz Slide 1 a Slide 2)
+  const { expensesByGroup, isLoading: groupLoading, error: groupError, refetch: refetchGroup } = useExpensesByGroup();
+  const { incomeByPerson, isLoading: personLoading, error: personError, refetch: refetchPerson } = useIncomeByPerson();
+
   // usePlanComparison potřebuje plans (aby vyfiltroval relevantní) a vybrané období
   const { rows: planComparisonRows, isLoading: comparisonLoading } = usePlanComparison(
     plans,
@@ -37,12 +51,12 @@ export function AppProvider({ children }) {
     selectedYear
   );
 
-  // Appka je "stále načítající", dokud aspoň JEDEN z 5 hooků nedokončil svůj request
-  const isLoading = expensesLoading || incomesLoading || savingGoalsLoading || debtsLoading || plansLoading;
-  const error = expensesError || incomesError || savingGoalsError || debtsError || plansError;
+  // Appka je "stále načítající", dokud aspoň JEDEN z hooků nedokončil svůj request
+  const isLoading = expensesLoading || incomesLoading || savingGoalsLoading || debtsLoading || plansLoading || categoriesLoading || sourcesLoading || groupLoading || personLoading;
+  const error = expensesError || incomesError || savingGoalsError || debtsError || plansError || categoriesError || sourcesError || groupError || personError;
 
   /**
-   * Znovu natáhne data ze všech 5 hooků paralelně.
+   * Znovu natáhne data ze všech hooků paralelně.
    * Volá se po každé CRUD akci (přidání/úprava/smazání), ať appka
    * zobrazí čerstvá data bez tvrdého reloadu celé stránky.
    */
@@ -53,8 +67,42 @@ export function AppProvider({ children }) {
       refetchSavingGoals(),
       refetchDebts(),
       refetchPlans(),
+      refetchCategories(),
+      refetchSources(),
+      refetchGroup(),
+      refetchPerson(),
     ]);
   }
+
+  /**
+ * Automaticky "zapíše" fixní náklady/předplatné pro nově vybraný měsíc,
+ * ALE JEN pokud je vybraný měsíc dnešní nebo budoucí - appka NIKDY
+ * negeneruje nic při prohlížení historie (minulých měsíců), protože
+ * by tím přepsala/vytvořila výdaje tam, kde uživatel jen "nahlíží",
+ * ne aktivně vyplňuje nový měsíc.
+ *
+ * Přirovnání: je to jako rozdíl mezi čtením starého deníkového zápisu
+ * (appka nic nemění) a psaním dnešního zápisu (appka může doplnit
+ * "dnešní řádek" podle vzoru) - appka podle data pozná, do kterého
+ * režimu se má chovat.
+ */
+useEffect(() => {
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1; // getMonth() vrací 0-11, appka potřebuje 1-12
+  const currentYear = today.getFullYear();
+
+  const isCurrentOrFuture =
+    selectedYear > currentYear ||
+    (selectedYear === currentYear && selectedMonth >= currentMonth);
+
+  if (!isCurrentOrFuture) return; // appka jen prohlíží historii, nic nezapisuje
+
+  async function autoGenerate() {
+    await generateFixedExpenses(selectedYear, selectedMonth);
+    await refetchAll();
+  }
+  autoGenerate();
+}, [selectedMonth, selectedYear]);
 
   // Objekt, co se přes Context.Provider zpřístupní všem slidům
   const value = {
@@ -63,6 +111,10 @@ export function AppProvider({ children }) {
     savingGoals,
     debts,
     plans,
+    expenseCategories,
+    incomeSources,
+    expensesByGroup,
+    incomeByPerson,
     planComparisonRows,
     comparisonLoading,
     selectedMonth,

@@ -1,9 +1,11 @@
 package com.pavel.rozpocetbackend.service;
 
+import com.pavel.rozpocetbackend.dto.IncomeDTO;
 import com.pavel.rozpocetbackend.entity.Income;
 import com.pavel.rozpocetbackend.entity.IncomeSource;
 import com.pavel.rozpocetbackend.repository.IncomeRepository;
 import com.pavel.rozpocetbackend.repository.IncomeSourceRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -102,5 +104,39 @@ public class IncomeService {
                         income -> income.getIncomeSource().getPerson(),
                         Collectors.summingDouble(Income::getAmount)
                 ));
+    }
+
+    /**
+     * Upraví existující příjem - amount/date/type vždy, incomeSource jen
+     * pokud appka poslala sourceId (jinak zůstává beze změny).
+     */
+    public Income update(Long id, IncomeDTO incomeDTO, Long sourceId) {
+        Income existingIncome = incomeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Income s ID " + id + " nenalezen"));
+
+        existingIncome.setAmount(incomeDTO.getAmount());
+        existingIncome.setDate(incomeDTO.getDate());
+        existingIncome.setType(incomeDTO.getType());
+
+        // Pokud appka poslala sourceId, najdi a přiřaď nový zdroj
+        if (sourceId != null) {
+            IncomeSource newSource = incomeSourceRepository.findById(sourceId)
+                    .orElseThrow(() -> new EntityNotFoundException("IncomeSource s ID " + sourceId + " nenalezen"));
+            existingIncome.setIncomeSource(newSource);
+        }
+
+        return incomeRepository.save(existingIncome);
+    }
+
+
+    /**
+     * Smaže příjem podle ID. Nejdřív ověří, že záznam vůbec existuje,
+     * ať appka nespadne na nejasnou chybu při mazání neexistujícího ID.
+     */
+    public void delete(Long id) {
+        if (!incomeRepository.existsById(id)) {
+            throw new EntityNotFoundException("Income s ID " + id + " nenalezen");
+        }
+        incomeRepository.deleteById(id);
     }
 }

@@ -5,6 +5,7 @@ import com.pavel.rozpocetbackend.entity.Income;
 import com.pavel.rozpocetbackend.mapper.IncomeMapper;
 import com.pavel.rozpocetbackend.service.IncomeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,28 +43,6 @@ public class IncomeController {
     }
 
     /**
-     * Endpoint pro úpravu existujícího příjmu.
-     * ID v URL (/api/incomes/5), nové hodnoty v těle, sourceId jako query parametr -
-     * stejný vzor jako u addIncome.
-     */
-    @PutMapping("/{id}")
-    public IncomeDTO updateIncome(@PathVariable Long id,
-                                  @RequestBody IncomeDTO incomeDTO,
-                                  @RequestParam Long sourceId) {
-        Income incomeEntity = IncomeMapper.toEntity(incomeDTO);
-        Income updatedIncome = incomeService.updateIncome(id, incomeEntity, sourceId);
-        return IncomeMapper.toDTO(updatedIncome);
-    }
-
-    /**
-     * Endpoint pro smazání příjmu podle ID.
-     */
-    @DeleteMapping("/{id}")
-    public void deleteIncome(@PathVariable Long id) {
-        incomeService.deleteIncome(id);
-    }
-
-    /**
      * Vrátí celkovou sumu příjmů za konkrétní rok.
      */
     @GetMapping("/total/{year}")  // GET /api/incomes/total/{year}
@@ -85,5 +64,25 @@ public class IncomeController {
     @GetMapping("/by-person")  // GET /api/incomes/by-person
     public Map<String, Double> getIncomeByPerson() {
         return incomeService.getIncomeByPerson();
+    }
+
+    /**
+     * Upraví existující příjem podle ID, včetně možnosti změnit zdroj.
+     * sourceId je teď volitelný parametr - pokud appka nepošle, zdroj zůstane
+     * beze změny (zpětná kompatibilita), pokud pošle, appka přiřadí nový zdroj.
+     */
+    @PutMapping("/{id}")  // PUT /api/incomes/{id}
+    public IncomeDTO updateIncome(@PathVariable Long id, @RequestBody IncomeDTO incomeDTO, @RequestParam(required = false) Long sourceId) {
+        Income updatedEntity = incomeService.update(id, incomeDTO, sourceId);
+        return IncomeMapper.toDTO(updatedEntity);
+    }
+
+    /**
+     * Smaže konkrétní příjem podle ID.
+     */
+    @DeleteMapping("/{id}")  // DELETE /api/incomes/{id}
+    public ResponseEntity<Void> deleteIncome(@PathVariable Long id) {
+        incomeService.delete(id);
+        return ResponseEntity.noContent().build();  // HTTP 204 - úspěšně smazáno
     }
 }

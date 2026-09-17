@@ -2,7 +2,7 @@
 // Řeší na jednom místě: base URL, hlavičky requestu, a zpracování chyb.
 // Všechny api/*.js soubory tuhle funkci používají místo přímého volání fetch().
 
-const BASE_URL = 'https://rodinny-rozpocet-backend.onrender.com/api';
+const BASE_URL = 'http://localhost:8080/api';
 
 async function request(endpoint, options = {}) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -19,7 +19,12 @@ async function request(endpoint, options = {}) {
   }
 
   // DELETE endpointy vrací 204 No Content - není co parsovat jako JSON.
-  if (response.status === 204) {
+  // Některé endpointy (např. generate-fixed na backendu, co vrací "void")
+  // mají prázdné tělo odpovědi i se statusem 200 - content-length "0"
+  // znamená, že tam skutečně nic není, takže appka to ani nezkouší
+  // parsovat jako JSON (to by vždycky spadlo na chybu "Unexpected end of JSON input").
+  const contentLength = response.headers.get('content-length');
+  if (response.status === 204 || contentLength === '0') {
     return null;
   }
 

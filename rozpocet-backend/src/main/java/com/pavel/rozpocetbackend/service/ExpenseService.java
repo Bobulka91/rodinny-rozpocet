@@ -5,6 +5,7 @@ import com.pavel.rozpocetbackend.entity.Expense;
 import com.pavel.rozpocetbackend.entity.ExpenseCategory;
 import com.pavel.rozpocetbackend.repository.ExpenseRepository;
 import com.pavel.rozpocetbackend.repository.ExpenseCategoryRepository;
+import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,34 +32,6 @@ public class ExpenseService {
                 .orElseThrow(() -> new IllegalArgumentException("ExpenseCategory not found: " + categoryId));
         expense.setExpenseCategory(category);
         return expenseRepository.save(expense);
-    }
-
-    // Update existujícího výdaje podle ID.
-    // Nejdřív ověříme, že výdaj i kategorie fakt existují (jinak IllegalArgumentException),
-    // pak přepíšeme hodnoty a uložíme - save() na existující ID v JPA znamená update, ne insert.
-    public Expense updateExpense(Long id, Expense updatedExpense, Long categoryId) {
-        Expense existingExpense = expenseRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Expense not found: " + id));
-
-        ExpenseCategory category = expenseCategoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("ExpenseCategory not found: " + categoryId));
-
-        existingExpense.setAmount(updatedExpense.getAmount());
-        existingExpense.setDate(updatedExpense.getDate());
-        existingExpense.setExpenseCategory(category);
-
-        return expenseRepository.save(existingExpense);
-    }
-
-    // Smazání výdaje podle ID.
-    // existsById() nejdřív ověří, že tam něco je - jinak by deleteById() na neexistujícím
-    // ID v novějších verzích Spring Data JPA hodilo EmptyResultDataAccessException,
-    // což je míň srozumitelná chyba než naše vlastní IllegalArgumentException.
-    public void deleteExpense(Long id) {
-        if (!expenseRepository.existsById(id)) {
-            throw new IllegalArgumentException("Expense not found: " + id);
-        }
-        expenseRepository.deleteById(id);
     }
 
     public List<Expense> getAllExpenses() {
@@ -161,5 +134,36 @@ public class ExpenseService {
                 .filter(expense -> expense.getDate().getMonthValue() == month)
                 .mapToDouble(Expense::getAmount)
                 .sum();
+    }
+
+    /**
+     * Aktualizuje existující výdaj podle ID - přepíše částku, datum a případně kategorii.
+     * categoryId přichází zvlášť (z Controlleru); pokud je null, kategorie výdaje
+     * se nemění, jen se aktualizují amount a date.
+     */
+    public Expense update(Long id, Expense expense, Long categoryId) {
+        Expense existing = expenseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Výdaj s ID " + id + " nenalezen"));
+
+        existing.setAmount(expense.getAmount());
+        existing.setDate(expense.getDate());
+
+        if (categoryId != null) {  // Kategorii měníme, jen když appka dostala nové categoryId
+            ExpenseCategory category = expenseCategoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new IllegalArgumentException("ExpenseCategory not found: " + categoryId));
+            existing.setExpenseCategory(category);
+        }
+
+        return expenseRepository.save(existing);
+    }
+
+    /**
+     * Smaže výdaj podle ID. Pokud neexistuje, vyhodí výjimku.
+     */
+    public void delete(Long id) {
+        if (!expenseRepository.existsById(id)) {
+            throw new EntityNotFoundException("Výdaj s ID " + id + " nenalezen");
+        }
+        expenseRepository.deleteById(id);
     }
 }

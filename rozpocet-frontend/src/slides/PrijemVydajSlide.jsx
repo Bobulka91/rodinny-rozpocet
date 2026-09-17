@@ -1,71 +1,69 @@
 /**
  * Slide 2 - Příjem/Výdaj: seznam transakcí, formulář na přidání/editaci,
- * mazání s potvrzením.
+ * mazání s potvrzením. Po restrukturalizaci backendu appka pracuje
+ * s ExpenseCategory/IncomeSource jako vnořenými objekty, ne prostým textem.
  */
 import { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import TransactionItem from '../components/TransactionItem'; // jeden řádek transakce
-import Modal from '../components/Modal'; // obal na formulář
-import TransactionForm from '../components/TransactionForm'; // formulář Income/Expense
-import ConfirmDeleteModal from '../components/ConfirmDeleteModal'; // potvrzení mazání
+import TransactionItem from '../components/TransactionItem';
+import Modal from '../components/Modal';
+import TransactionForm from '../components/TransactionForm';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import { createExpense, updateExpense, deleteExpense } from '../api/expenseApi';
 import { createIncome, updateIncome, deleteIncome } from '../api/incomeApi';
 
 function PrijemVydajSlide() {
-  const { expenses, incomes, refetchAll, isLoading, error } = useContext(AppContext);
-  const [isModalOpen, setIsModalOpen] = useState(false); // je otevřený formulář na přidání/editaci?
-  const [editingItem, setEditingItem] = useState(null); // null = přidáváme nové, jinak upravujeme tuhle položku
-  const [itemToDelete, setItemToDelete] = useState(null); // null = nic se nemaže
+  const { expenses, incomes, expenseCategories, incomeSources, refetchAll, isLoading, error } = useContext(AppContext);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   if (isLoading) return <p style={{ color: 'white' }}>Načítám...</p>;
   if (error) return <p style={{ color: 'white' }}>Chyba: {error}</p>;
 
-  // Otevře formulář v "add" režimu - vynuluje editingItem, formulář bude prázdný
   function openAddModal() {
     setEditingItem(null);
     setIsModalOpen(true);
   }
 
-  // Otevře formulář v "edit" režimu - uloží celou položku + typ (expense/income),
-  // aby TransactionForm věděl, jaké pole předvyplnit a co po odeslání volat
   function openEditModal(item, type) {
     setEditingItem({ ...item, type });
     setIsModalOpen(true);
   }
 
   /**
-   * Rozhoduje, jestli zavolat create nebo update API, podle toho,
-   * zda editingItem existuje (editace) nebo je null (nová transakce).
+   * Rozhoduje mezi create/update podle toho, jestli editingItem existuje.
+   * Kategorii/zdroj posíláme jako samostatné ID (categoryId/sourceId) v query
+   * parametru, ne jako součást těla - takhle to backend očekává.
    */
   async function handleSubmitTransaction(data) {
     if (editingItem) {
-      // Editace existující položky - podle typu voláme update na správný modul
+      // Editace - podle backendu update NEMĚNÍ kategorii/zdroj, jen amount/date
       if (editingItem.type === 'expense') {
-        await updateExpense(editingItem.id, { amount: data.amount, date: data.date, category: data.category });
+        await updateExpense(editingItem.id, { amount: data.amount, date: data.date });
       } else {
-        await updateIncome(editingItem.id, { amount: data.amount, date: data.date, type: 'HLAVNI_PRIJEM', source: data.category });
+        await updateIncome(editingItem.id, { amount: data.amount, date: data.date, type: data.incomeType });
       }
     } else {
-      // Nová položka - podle typu vybraného ve formuláři voláme create na správný modul
+      // Nová položka - ID kategorie/zdroje posíláme zvlášť
       if (data.type === 'expense') {
-        await createExpense({ amount: data.amount, date: data.date, category: data.category });
+        await createExpense({ amount: data.amount, date: data.date }, data.categoryId);
       } else {
-        await createIncome({ amount: data.amount, date: data.date, type: 'HLAVNI_PRIJEM', source: data.category });
+        await createIncome({ amount: data.amount, date: data.date, type: data.incomeType }, data.sourceId);
       }
     }
-    setIsModalOpen(false); // zavřít formulář
-    setEditingItem(null); // vyčistit editační stav
-    await refetchAll(); // znovu natáhnout data ze všech hooků, appka zůstane na stejné sekci
+    setIsModalOpen(false);
+    setEditingItem(null);
+    await refetchAll();
   }
 
-  // Podle typu smazané položky volá deleteExpense, nebo deleteIncome
   async function handleConfirmDelete() {
     if (itemToDelete.type === 'expense') {
       await deleteExpense(itemToDelete.id);
     } else {
       await deleteIncome(itemToDelete.id);
     }
-    setItemToDelete(null); // zavřít potvrzovací dialog
+    setItemToDelete(null);
     await refetchAll();
   }
 
@@ -74,23 +72,23 @@ function PrijemVydajSlide() {
       <div className="eyebrow">Sekce</div>
       <h2 className="section-title">Příjem / Výdaj</h2>
 
-      {/* stopPropagation zabrání, aby klik na tlačítko spustil cokoliv jiného na pozadí */}
       <button className="btn-add" onPointerDown={(e) => e.stopPropagation()} onClick={openAddModal}>
         + Přidat
       </button>
 
       <div className="section-label">Výdaje</div>
       <div className="glass-card">
-        {expenses.map((expense) => ( // .map() vytvoří jednu TransactionItem na každý výdaj
+        {expenses.map((expense) => (
           <TransactionItem
-            key={expense.id} // unikátní klíč - React ho potřebuje pro seznamy
+            key={expense.id}
             icon="💸"
-            name={expense.category}
+            // expenseCategory může být null (staré záznamy před restrukturalizací)
+            name={expense.expenseCategory?.label || 'Bez kategorie'}
             date={expense.date}
             amount={expense.amount}
             type="expense"
             onEdit={() => openEditModal(expense, 'expense')}
-            onDelete={() => setItemToDelete({ id: expense.id, type: 'expense', name: expense.category })}
+            onDelete={() => setItemToDelete({ id: expense.id, type: 'expense', name: expense.expenseCategory?.label || 'výdaj' })}
           />
         ))}
       </div>
@@ -101,26 +99,31 @@ function PrijemVydajSlide() {
           <TransactionItem
             key={income.id}
             icon="💼"
-            name={income.source || 'Hlavní příjem'} // source je jen u vedlejších příjmů (viz IncomeDTO)
+            // Spojíme person + label pro čitelný název, např. "Já - Výplata"
+            name={income.incomeSource ? `${income.incomeSource.person} - ${income.incomeSource.label}` : 'Bez zdroje'}
             date={income.date}
             amount={income.amount}
             type="income"
             onEdit={() => openEditModal(income, 'income')}
-            onDelete={() => setItemToDelete({ id: income.id, type: 'income', name: income.source || 'Hlavní příjem' })}
+            onDelete={() => setItemToDelete({ id: income.id, type: 'income', name: income.incomeSource?.label || 'příjem' })}
           />
         ))}
       </div>
 
-      {/* title se mění podle toho, jestli přidáváme, nebo upravujeme */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? 'Upravit transakci' : 'Nová transakce'}>
-        <TransactionForm onSubmit={handleSubmitTransaction} initialValues={editingItem} />
+        <TransactionForm
+          onSubmit={handleSubmitTransaction}
+          initialValues={editingItem}
+          expenseCategories={expenseCategories}
+          incomeSources={incomeSources}
+        />
       </Modal>
 
       <ConfirmDeleteModal
-        isOpen={itemToDelete !== null} // otevřený, kdykoliv je itemToDelete nastavené
+        isOpen={itemToDelete !== null}
         onClose={() => setItemToDelete(null)}
         onConfirm={handleConfirmDelete}
-        itemName={itemToDelete?.name} // ?. - bezpečný přístup, kdyby itemToDelete bylo null
+        itemName={itemToDelete?.name}
       />
     </div>
   );
