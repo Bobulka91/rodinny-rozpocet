@@ -1,6 +1,7 @@
 package com.pavel.rozpocetbackend.service;
 
 import com.pavel.rozpocetbackend.entity.Expense;
+import com.pavel.rozpocetbackend.entity.ExpenseCategory;
 import com.pavel.rozpocetbackend.repository.ExpenseRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,10 +33,16 @@ class ExpenseServiceTest {
      */
     @Test
     void getExpensesByCategory_shouldGroupAndSumCorrectly() {
-        // Arrange - dva výdaje v kategorii "Jídlo", jeden v "Nájem"
-        Expense e1 = new Expense(1L, 1000.0, LocalDate.of(2026, 6, 1), "Jídlo");
-        Expense e2 = new Expense(2L, 500.0, LocalDate.of(2026, 6, 15), "Jídlo");
-        Expense e3 = new Expense(3L, 12000.0, LocalDate.of(2026, 6, 1), "Nájem");
+        // Arrange - dvě kategorie (Expense teď vyžaduje celý ExpenseCategory objekt, ne jen String s labelem)
+        ExpenseCategory jidlo = new ExpenseCategory();
+        jidlo.setLabel("Jídlo");
+        ExpenseCategory najem = new ExpenseCategory();
+        najem.setLabel("Nájem");
+
+        // dva výdaje v kategorii "Jídlo", jeden v "Nájem"
+        Expense e1 = new Expense(1L, 1000.0, LocalDate.of(2026, 6, 1), jidlo);
+        Expense e2 = new Expense(2L, 500.0, LocalDate.of(2026, 6, 15), jidlo);
+        Expense e3 = new Expense(3L, 12000.0, LocalDate.of(2026, 6, 1), najem);
 
         when(expenseRepository.findAll()).thenReturn(List.of(e1, e2, e3));
 
@@ -52,9 +59,14 @@ class ExpenseServiceTest {
      */
     @Test
     void getTotalExpensesForYear_shouldSumOnlyMatchingYear() {
+        ExpenseCategory jidlo = new ExpenseCategory();
+        jidlo.setLabel("Jídlo");
+        ExpenseCategory najem = new ExpenseCategory();
+        najem.setLabel("Nájem");
+
         // Arrange - jeden výdaj v roce 2026, jeden v roce 2025 (nemá se počítat)
-        Expense e1 = new Expense(1L, 1000.0, LocalDate.of(2026, 6, 1), "Jídlo");
-        Expense e2 = new Expense(2L, 5000.0, LocalDate.of(2025, 3, 1), "Nájem");
+        Expense e1 = new Expense(1L, 1000.0, LocalDate.of(2026, 6, 1), jidlo);
+        Expense e2 = new Expense(2L, 5000.0, LocalDate.of(2025, 3, 1), najem);
 
         when(expenseRepository.findAll()).thenReturn(List.of(e1, e2));
 

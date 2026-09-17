@@ -34,6 +34,32 @@ public class IncomeService {
         return incomeRepository.save(income);
     }
 
+    // Update existujícího příjmu podle ID.
+    // Stejný vzor jako u addIncome - ověříme, že příjem i zdroj existují,
+    // přepíšeme hodnoty a uložíme (save() na existující ID = update).
+    public Income updateIncome(Long id, Income updatedIncome, Long sourceId) {
+        Income existingIncome = incomeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Income not found: " + id));
+
+        IncomeSource source = incomeSourceRepository.findById(sourceId)
+                .orElseThrow(() -> new IllegalArgumentException("IncomeSource not found: " + sourceId));
+
+        existingIncome.setAmount(updatedIncome.getAmount());
+        existingIncome.setDate(updatedIncome.getDate());
+        existingIncome.setType(updatedIncome.getType());
+        existingIncome.setIncomeSource(source);
+
+        return incomeRepository.save(existingIncome);
+    }
+
+    // Smazání příjmu podle ID.
+    public void deleteIncome(Long id) {
+        if (!incomeRepository.existsById(id)) {
+            throw new IllegalArgumentException("Income not found: " + id);
+        }
+        incomeRepository.deleteById(id);
+    }
+
     /**
      * Vrátí všechny příjmy z databáze.
      */
@@ -67,17 +93,13 @@ public class IncomeService {
 
     /**
      * Seskupí všechny příjmy podle osoby (person z IncomeSource) a sečte částky.
-     * Na rozdíl od pouhého zdroje (label) tady jde o to, KOMU příjem patří -
-     * appka sečte třeba všechny příjmy patřící "Manželka" dohromady, bez ohledu
-     * na to, jestli jde o výplatu, brigádu nebo dýško. Používá se pro souhrnné
-     * částky "Já: X Kč", "Manželka: Y Kč" na Slide 2.
      */
     public Map<String, Double> getIncomeByPerson() {
         return incomeRepository.findAll()
                 .stream()
-                .filter(income -> income.getIncomeSource() != null)  // Přeskočíme příjmy bez zdroje
+                .filter(income -> income.getIncomeSource() != null)
                 .collect(Collectors.groupingBy(
-                        income -> income.getIncomeSource().getPerson(),  // Klíčem je osoba
+                        income -> income.getIncomeSource().getPerson(),
                         Collectors.summingDouble(Income::getAmount)
                 ));
     }

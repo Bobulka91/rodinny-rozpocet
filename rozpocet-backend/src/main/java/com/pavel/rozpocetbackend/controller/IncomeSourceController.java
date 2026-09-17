@@ -23,4 +23,17 @@ public class IncomeSourceController {
     public IncomeSource addIncomeSource(@RequestBody IncomeSource incomeSource) {
         return incomeSourceService.addIncomeSource(incomeSource);
     }
+
+    // Update existujícího zdroje příjmu.
+    @PutMapping("/{id}")
+    public IncomeSource updateIncomeSource(@PathVariable Long id,
+                                           @RequestBody IncomeSource incomeSource) {
+        return incomeSourceService.updateIncomeSource(id, incomeSource);
+    }
+
+    // Smazání zdroje příjmu podle ID.
+    @DeleteMapping("/{id}")
+    public void deleteIncomeSource(@PathVariable Long id) {
+        incomeSourceService.deleteIncomeSource(id);
+    }
 }

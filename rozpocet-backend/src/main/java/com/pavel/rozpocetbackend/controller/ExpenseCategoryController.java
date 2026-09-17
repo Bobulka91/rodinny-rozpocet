@@ -27,4 +27,17 @@ public class ExpenseCategoryController {
     public ExpenseCategory addExpenseCategory(@RequestBody ExpenseCategory expenseCategory) {
         return expenseCategoryService.addExpenseCategory(expenseCategory);
     }
+
+    // Update existující kategorie výdaje.
+    @PutMapping("/{id}")
+    public ExpenseCategory updateExpenseCategory(@PathVariable Long id,
+                                                 @RequestBody ExpenseCategory expenseCategory) {
+        return expenseCategoryService.updateExpenseCategory(id, expenseCategory);
+    }
+
+    // Smazání kategorie výdaje podle ID.
+    @DeleteMapping("/{id}")
+    public void deleteExpenseCategory(@PathVariable Long id) {
+        expenseCategoryService.deleteExpenseCategory(id);
+    }
 }

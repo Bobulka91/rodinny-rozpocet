@@ -12,8 +12,8 @@ import java.util.Map;
 
 /**
  * Třída IncomeController je zodpovědná za zpracování HTTP požadavků týkajících se příjmů.
- * Obsahuje metody pro získání všech příjmů, přidání nového příjmu, výpočet celkového
- * příjmu za rok, měsíční rozpad příjmů pro grafy a agregaci podle osoby.
+ * Obsahuje metody pro získání všech příjmů, přidání, úpravu a smazání příjmu, výpočet
+ * celkového příjmu za rok, měsíční rozpad příjmů pro grafy a agregaci podle osoby.
  */
 @RestController  // Označení třídy jako REST Controller
 @RequestMapping("/api/incomes")  // Základní URL pro všechny endpointy v tomto controlleru
@@ -39,6 +39,28 @@ public class IncomeController {
         Income incomeEntity = IncomeMapper.toEntity(incomeDTO);  // Převod DTO na entitu
         Income savedIncome = incomeService.addIncome(incomeEntity, sourceId);  // Uložení do databáze s přiřazeným zdrojem
         return IncomeMapper.toDTO(savedIncome);  // Vrácení uloženého příjmu jako DTO
+    }
+
+    /**
+     * Endpoint pro úpravu existujícího příjmu.
+     * ID v URL (/api/incomes/5), nové hodnoty v těle, sourceId jako query parametr -
+     * stejný vzor jako u addIncome.
+     */
+    @PutMapping("/{id}")
+    public IncomeDTO updateIncome(@PathVariable Long id,
+                                  @RequestBody IncomeDTO incomeDTO,
+                                  @RequestParam Long sourceId) {
+        Income incomeEntity = IncomeMapper.toEntity(incomeDTO);
+        Income updatedIncome = incomeService.updateIncome(id, incomeEntity, sourceId);
+        return IncomeMapper.toDTO(updatedIncome);
+    }
+
+    /**
+     * Endpoint pro smazání příjmu podle ID.
+     */
+    @DeleteMapping("/{id}")
+    public void deleteIncome(@PathVariable Long id) {
+        incomeService.deleteIncome(id);
     }
 
     /**
