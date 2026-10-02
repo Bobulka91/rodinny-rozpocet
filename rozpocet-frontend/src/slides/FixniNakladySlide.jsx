@@ -41,6 +41,16 @@ function filterExpensesForMonth(expenses, group, month, year) {
 }
 
 /**
+ * Vrátí VŠECHNY výdaje navázané na danou kategorii, bez ohledu na měsíc/rok -
+ * pro sekci "Historie podle kategorie" na konci slidu. Seřazené od nejnovějšího.
+ */
+function getHistoryForCategory(expenses, categoryId) {
+  return expenses
+    .filter((e) => e.expenseCategory?.id === Number(categoryId))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+/**
  * Jedna sekce (Fixní náklady NEBO Předplatné) - zobrazuje šablony
  * (pro správu) i skutečné výdaje za vybraný měsíc (pro kontrolu/opravu).
  */
@@ -143,6 +153,10 @@ function FixniNakladySlide() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
 
+  // --- Stav pro sekci "Historie podle kategorie" (napříč Fixní náklady i Předplatné) ---
+  const [historyCategoryId, setHistoryCategoryId] = useState('');
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState(new Set());
+
   if (isLoading) return <p style={{ color: 'white' }}>Načítám...</p>;
   if (error) return <p style={{ color: 'white' }}>Chyba: {error}</p>;
 
@@ -193,6 +207,54 @@ function FixniNakladySlide() {
     await refetchAll();
   }
 
+  // --- Handlery pro "Historie podle kategorie" ---
+
+  const historyExpenses = historyCategoryId ? getHistoryForCategory(expenses, historyCategoryId) : [];
+  const allHistorySelected = historyExpenses.length > 0 && selectedHistoryIds.size === historyExpenses.length;
+
+  function handleHistoryCategoryChange(value) {
+    setHistoryCategoryId(value);
+    setSelectedHistoryIds(new Set());
+  }
+
+  function toggleHistorySelection(id) {
+    setSelectedHistoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleSelectAllHistory() {
+    if (allHistorySelected) {
+      setSelectedHistoryIds(new Set());
+    } else {
+      setSelectedHistoryIds(new Set(historyExpenses.map((e) => e.id)));
+    }
+  }
+
+  /**
+   * Smaže všechny zaškrtnuté výdaje najednou - stejný vzor jako na Slide 2
+   * (Promise.all jednotlivých DELETE požadavků, appka nemá bulk endpoint).
+   */
+  async function handleDeleteSelectedHistory() {
+    if (selectedHistoryIds.size === 0) return;
+    const confirmed = window.confirm(`Opravdu smazat ${selectedHistoryIds.size} vybraných záznamů? Tohle nejde vzít zpět.`);
+    if (!confirmed) return;
+
+    try {
+      await Promise.all([...selectedHistoryIds].map((id) => deleteExpense(id)));
+      setSelectedHistoryIds(new Set());
+      await refetchAll();
+    } catch (err) {
+      alert('Něco se nepovedlo smazat. Zkus to prosím znovu.');
+    }
+  }
+
   return (
     <div className="slide">
       <div className="eyebrow">Sekce</div>
@@ -227,6 +289,67 @@ function FixniNakladySlide() {
         onDeleteExpense={setExpenseToDelete}
         refetchAll={refetchAll}
       />
+
+      {/* NOVÁ SEKCE: Historie podle kategorie - napříč obě skupiny i VŠEMI měsíci */}
+      <div className="section-label">Historie podle kategorie (všechny měsíce)</div>
+      <div className="glass-card">
+        <select
+          className="history-source-select"
+          value={historyCategoryId}
+          onChange={(e) => handleHistoryCategoryChange(e.target.value)}
+        >
+          <option value="">Vyber kategorii...</option>
+          <optgroup label={SKUPINA_FIXNI}>
+            {expenseCategories.filter((c) => c.categoryGroup === SKUPINA_FIXNI).map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </optgroup>
+          <optgroup label={SKUPINA_PREDPLATNE}>
+            {expenseCategories.filter((c) => c.categoryGroup === SKUPINA_PREDPLATNE).map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </optgroup>
+        </select>
+
+        {historyCategoryId && historyExpenses.length === 0 && (
+          <p style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Tahle kategorie zatím nemá žádné výdaje v historii.</p>
+        )}
+
+        {historyCategoryId && historyExpenses.length > 0 && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}>
+                <input type="checkbox" checked={allHistorySelected} onChange={toggleSelectAllHistory} />
+                Vybrat vše ({historyExpenses.length})
+              </label>
+              <button
+                className="btn-delete"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={handleDeleteSelectedHistory}
+                disabled={selectedHistoryIds.size === 0}
+              >
+                🗑 Smazat vybrané ({selectedHistoryIds.size})
+              </button>
+            </div>
+
+            {historyExpenses.map((expense) => (
+              <div
+                key={expense.id}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedHistoryIds.has(expense.id)}
+                  onChange={() => toggleHistorySelection(expense.id)}
+                />
+                <span style={{ fontSize: '0.8rem', color: '#6b7280', flex: 1 }}>{expense.date}</span>
+                <span style={{ fontSize: '0.8rem', color: '#9ca3af', flex: 2 }}>{expense.expenseCategory?.label}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, flex: 1, textAlign: 'right' }}>{expense.amount} Kč</span>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
 
       <Modal isOpen={isTemplateModalOpen} onClose={() => setIsTemplateModalOpen(false)} title={editingTemplate ? 'Upravit šablonu' : 'Nová šablona'}>
         <ExpenseCategoryForm onSubmit={handleSubmitTemplate} initialValues={editingTemplate} categoryGroup={activeGroup} type="FIXNI" />

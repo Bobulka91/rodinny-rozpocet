@@ -1,17 +1,17 @@
 package com.pavel.rozpocetbackend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Entita reprezentující jeden výdaj uložený v databázi.
- * Odpovídá tabulce "expense".
+ * Entita reprezentující jeden dluh uložený v databázi.
+ * Odpovídá tabulce "debt".
  */
 
 @Entity              // Říká Hibernate, že tahle třída = databázová tabulka
@@ -28,6 +28,17 @@ public class Debt {
     private Long id;  // Jednoznačné ID záznamu
     private String category;  // Kategorie dluhu (Nájem, Jídlo, PHM...)
     private Double totalAmount;  // Celková částka dluhu
-    private Double paidAmount;  // Uplacená částka
+    private Double paidAmount;  // Uplacená částka - appka ji dál udržuje jako uložené pole,
+    // jen ji teď navíc upravuje při každé splátce (viz DebtPayment)
+
+    /**
+     * Historie jednotlivých splátek k tomuto dluhu.
+     * cascade = ALL + orphanRemoval = true -> smažeš Debt, appka automaticky
+     * smaže i všechny jeho DebtPayment (na rozdíl od IncomeSource/ExpenseCategory,
+     * kde appka mazání se sdílenou historií naopak BLOKUJE).
+     * mappedBy = "debt" musí přesně odpovídat názvu fieldu v DebtPayment.
+     */
+    @OneToMany(mappedBy = "debt", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DebtPayment> payments = new ArrayList<>();
 
 }

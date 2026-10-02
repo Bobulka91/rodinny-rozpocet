@@ -24,8 +24,9 @@ export const AppContext = createContext();
  * Volá všechny datové hooky a spojuje je do jednoho value objektu.
  */
 export function AppProvider({ children }) {
-  const [selectedMonth, setSelectedMonth] = useState(7); // aktuálně vybraný měsíc (PlanSelector)
-  const [selectedYear, setSelectedYear] = useState(2026); // aktuálně vybraný rok (PlanSelector)
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1); // výchozí = aktuální měsíc, ne natvrdo napsaná hodnota
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear()); // výchozí = aktuální rok
 
   // Přejmenování isLoading/error při destructuringu - každý hook vrací
   // proměnnou se stejným jménem, museli bychom se jinak přepisovat navzájem
@@ -40,7 +41,7 @@ export function AppProvider({ children }) {
   const { incomeSources, isLoading: sourcesLoading, error: sourcesError, refetch: refetchSources } = useIncomeSources();
 
   // Agregace počítané přímo na backendu - appka je NEPOČÍTÁ ručně z expenses/incomes,
-  // jen je zobrazí (viz Slide 1 a Slide 2)
+  // jen je zobrazí (viz Slide 1)
   const { expensesByGroup, isLoading: groupLoading, error: groupError, refetch: refetchGroup } = useExpensesByGroup();
   const { incomeByPerson, isLoading: personLoading, error: personError, refetch: refetchPerson } = useIncomeByPerson();
 
@@ -75,34 +76,25 @@ export function AppProvider({ children }) {
   }
 
   /**
- * Automaticky "zapíše" fixní náklady/předplatné pro nově vybraný měsíc,
- * ALE JEN pokud je vybraný měsíc dnešní nebo budoucí - appka NIKDY
- * negeneruje nic při prohlížení historie (minulých měsíců), protože
- * by tím přepsala/vytvořila výdaje tam, kde uživatel jen "nahlíží",
- * ne aktivně vyplňuje nový měsíc.
- *
- * Přirovnání: je to jako rozdíl mezi čtením starého deníkového zápisu
- * (appka nic nemění) a psaním dnešního zápisu (appka může doplnit
- * "dnešní řádek" podle vzoru) - appka podle data pozná, do kterého
- * režimu se má chovat.
- */
-useEffect(() => {
-  const today = new Date();
-  const currentMonth = today.getMonth() + 1; // getMonth() vrací 0-11, appka potřebuje 1-12
-  const currentYear = today.getFullYear();
+   * Automaticky "zapíše" fixní náklady/předplatné pro nově vybraný měsíc,
+   * ALE JEN pokud je vybraný měsíc dnešní nebo budoucí - appka nikdy
+   * negeneruje nic při prohlížení historie (minulých měsíců).
+   */
+  useEffect(() => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1; // getMonth() vrací 0-11, appka potřebuje 1-12
+    const currentYear = today.getFullYear();
 
-  const isCurrentOrFuture =
-    selectedYear > currentYear ||
-    (selectedYear === currentYear && selectedMonth >= currentMonth);
+    const isCurrentMonth = selectedYear === currentYear && selectedMonth === currentMonth;
 
-  if (!isCurrentOrFuture) return; // appka jen prohlíží historii, nic nezapisuje
+      if (!isCurrentMonth) return; // appka jen prohlíží historii, nic nezapisuje
 
-  async function autoGenerate() {
-    await generateFixedExpenses(selectedYear, selectedMonth);
-    await refetchAll();
-  }
-  autoGenerate();
-}, [selectedMonth, selectedYear]);
+    async function autoGenerate() {
+      await generateFixedExpenses(selectedYear, selectedMonth);
+      await refetchAll();
+    }
+    autoGenerate();
+  }, [selectedMonth, selectedYear]);
 
   // Objekt, co se přes Context.Provider zpřístupní všem slidům
   const value = {

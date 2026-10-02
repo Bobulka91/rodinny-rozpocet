@@ -5,9 +5,9 @@
  */
 import { useState } from 'react';
 
-function IncomeSourceForm({ onSubmit }) {
-  const [person, setPerson] = useState('');
-  const [label, setLabel] = useState('');
+function IncomeSourceForm({ onSubmit, initialValues }) {
+  const [person, setPerson] = useState(initialValues?.person || '');
+  const [label, setLabel] = useState(initialValues?.label || '');
 
   function handleSubmit(e) {
     e.preventDefault();

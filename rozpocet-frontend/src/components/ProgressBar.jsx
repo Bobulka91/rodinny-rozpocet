@@ -3,7 +3,7 @@
  * current/target jsou čísla (Kč) - procento se počítá tady, appka
  * ho nikde neukládá do databáze.
  */
-function ProgressBar({ label, current, target, onDelete, onEdit }) {
+function ProgressBar({ label, current, target, onDelete, onEdit, onHistory }) {
   const percentage = (current / target) * 100; // % naplnění cíle/splacení dluhu
 
   return (
@@ -12,7 +12,12 @@ function ProgressBar({ label, current, target, onDelete, onEdit }) {
         <span>{label}</span>
         <div className="goal-right">
           <span>{current} / {target} Kč</span>
-          {/* Tlačítka na editaci/mazání se zobrazí jen, když je rodič pošle jako prop */}
+          {/* Tlačítka na editaci/mazání/historii se zobrazí jen, když je rodič pošle jako prop */}
+          {onHistory && (
+            <button className="btn-edit" onPointerDown={(e) => e.stopPropagation()} onClick={onHistory}>
+              📜
+            </button>
+          )}
           {onEdit && (
             <button className="btn-edit" onPointerDown={(e) => e.stopPropagation()} onClick={onEdit}>
               ✏️

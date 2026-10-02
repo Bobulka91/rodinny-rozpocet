@@ -6,8 +6,23 @@ const months = [
   'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
 ];
 
+/**
+ * Vygeneruje seznam let kolem aktuálního roku, ať appka nikdy "nedojde" -
+ * není potřeba každý rok ručně přidávat novou <option> do kódu.
+ * Rozsah: 2 roky zpátky (historie) až 3 roky dopředu (plánování dopředu).
+ */
+function generateYearRange() {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let y = currentYear - 2; y <= currentYear + 3; y++) {
+    years.push(y);
+  }
+  return years;
+}
+
 function PlanSelector() {
   const { selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useContext(AppContext);
+  const years = generateYearRange(); // spočítá se znovu při každém renderu - je to jen pár čísel, žádná zátěž
 
   return (
     <div className="plan-selector" onPointerDown={(e) => e.stopPropagation()}>
@@ -17,9 +32,9 @@ function PlanSelector() {
         ))}
       </select>
       <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
-        <option value={2025}>2025</option>
-        <option value={2026}>2026</option>
-        <option value={2027}>2027</option>
+        {years.map((year) => (
+          <option key={year} value={year}>{year}</option>
+        ))}
       </select>
     </div>
   );
