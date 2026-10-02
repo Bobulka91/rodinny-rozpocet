@@ -2,7 +2,10 @@
 // Řeší na jednom místě: base URL, hlavičky requestu, a zpracování chyb.
 // Všechny api/*.js soubory tuhle funkci používají místo přímého volání fetch().
 
-const BASE_URL = 'http://localhost:8080/api';
+// Vite si podle režimu (dev/build) sám natáhne .env.development nebo
+// .env.production - appka tak sama pozná, jestli volá lokální backend,
+// nebo ten nasazený na Renderu, bez ručního přepisování téhle adresy.
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 async function request(endpoint, options = {}) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
