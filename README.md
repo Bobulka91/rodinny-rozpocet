@@ -123,7 +123,7 @@ Stejný princip "ulož, nepočítej pořád dokola" se používá i u `MonthlyBa
 
 Appka běží online, můžeš si ji hned vyzkoušet bez instalace:
 
-👉 **[Rodinný rozpočet na Renderu]((https://rodinny-rozpocet-frontend.onrender.com))**
+👉 **[Rodinný rozpočet na Renderu](https://rodinny-rozpocet-frontend.onrender.com))**
 
 > ⏳ Appka běží na bezplatném tarifu, takže po delší neaktivitě "usne".
 > První načtení může trvat 30–60 sekund, než se backend probudí. Pak už jede normálně.
