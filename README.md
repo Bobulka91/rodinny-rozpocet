@@ -119,6 +119,15 @@ Stejný princip "ulož, nepočítej pořád dokola" se používá i u `MonthlyBa
 
 ## 🚀 Spuštění projektu
 
+## 🌐 Živá ukázka
+
+Appka běží online, můžeš si ji hned vyzkoušet bez instalace:
+
+👉 **[Rodinný rozpočet na Renderu]((https://rodinny-rozpocet-frontend.onrender.com))**
+
+> ⏳ Appka běží na bezplatném tarifu, takže po delší neaktivitě "usne".
+> První načtení může trvat 30–60 sekund, než se backend probudí. Pak už jede normálně.
+
 ### Varianta 1 — Docker (doporučeno)
 
 Vyžaduje [Docker Desktop](https://www.docker.com/products/docker-desktop/).
